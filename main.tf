@@ -75,11 +75,23 @@ resource "aws_instance" "splunk_instance" {
 ami="ami-0e40787bcd2f11bbb"
   instance_type = "t2.micro"
   key_name      = "tola004keypair"
+  
+    depends_on = [
+    aws_security_group.tola004_sg,
+    random_string.password,
+    random_string.random_username,
+  ]
 tags = {
     Name = "SplunkInstance"
   }
 vpc_security_group_ids = [aws_security_group.tola004_sg.id]
 
+}
+
+
+
+resource "null_resource" "create_user_and_index" {
+  
 # Provisioner to wait until the instance is accessible over the internet
 provisioner "local-exec" {
   # Wait for up to 5 minutes for SSH to become available
@@ -107,6 +119,6 @@ provisioner "local-exec" {
       
     echo "Indexs completed"
 
-  EOT
+EOT
 }
 }
