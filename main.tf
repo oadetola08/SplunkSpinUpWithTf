@@ -14,18 +14,6 @@ resource "random_string" "password" {
   override_special = "!@#*"
 }
 
-output "generated_IP" {
-  value = aws_instance.splunk_instance.public_ip
-}
-
-output "generated_username" {
-  value = random_string.random_username.result
-}
-
-output "generated_password" {
-  value = random_string.password.result
-}
-
 resource "aws_security_group" "tola004_sg" {
   name        = "tola004-security-group"
   description = "An tola004 security group for EC2 instances"
@@ -70,7 +58,6 @@ resource "aws_security_group" "tola004_sg" {
   }
 }
 
-
 resource "aws_instance" "splunk_instance" {
 ami="ami-0e40787bcd2f11bbb"
   instance_type = "t2.micro"
@@ -88,8 +75,7 @@ vpc_security_group_ids = [aws_security_group.tola004_sg.id]
 
 }
 
-
-
+#Create User and indexes using curl command 
 resource "null_resource" "create_user_and_index" {
   
 # Provisioner to wait until the instance is accessible over the internet
@@ -122,3 +108,64 @@ provisioner "local-exec" {
 EOT
 }
 }
+
+## Create user and indexes using splunk provider 
+#provider "splunk" {
+#  url                  = "https://${aws_instance.splunk_instance.public_ip}:8089"
+#  username             = "admin"
+#  password             = "SPLUNK-${aws_instance.splunk_instance.id}"
+#  insecure_skip_verify = true
+#}
+
+# Execute a local command to introduce a wait
+#resource "null_resource" "wait" {
+#  provisioner "local-exec" {
+#    command = "sleep 25200"  # Sleep for 25200 seconds
+#  }
+#  depends_on = [aws_instance.splunk_instance]
+#}
+
+# Splunk User
+#resource "splunk_authentication_users" "user01" {
+#  name              = "${random_string.random_username.result}"
+#  email             = "user01@example.com"
+#  password          = "${random_string.password.result}"
+#  force_change_pass = false
+#  roles             = ["user"]
+#  depends_on        = [null_resource.wait]
+  
+#}
+
+# Splunk Index
+#resource "splunk_indexes" "my_custom_index" {
+#  name                   = "my_custom_index"
+#  datatype               = "event"
+#  max_hot_buckets        = 6
+#  max_total_data_size_mb = 50000
+#  home_path              = "$SPLUNK_DB/main/db"
+#  cold_path              = "$SPLUNK_DB/main/colddb"
+#  thawed_path            = "$SPLUNK_DB/main/thaweddb"
+#  depends_on             = [null_resource.wait]
+
+#}
+
+output "generated_IP" {
+  value = aws_instance.splunk_instance.public_ip
+}
+
+output "generated_username" {
+  value = random_string.random_username.result
+}
+
+output "generated_password" {
+  value = random_string.password.result
+}
+
+
+#terraform {
+#   required_providers {
+#    splunk = {
+#      source  = "splunk/splunk"
+#    }
+#  }
+#}
